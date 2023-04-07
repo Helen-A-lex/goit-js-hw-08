@@ -1,46 +1,35 @@
 import throttle from 'lodash.throttle';
-const feedbackFormEl = document.querySelector('.feedback-form');
 
-feedbackFormEl.addEventListener('submit', onFeedbackForm);
-function onFeedbackForm(evt) {
-  evt.preventDefault();
-  const formData = new FormData(evt.currentTarget);
-  const data = {};
-  formData.forEach((value, name) => {
-    data[name] = value;
-  });
-  console.log(data);
-  //   localStorage.clear();
-  evt.currentTarget.reset();
+const LOCAL_KEY = 'feedback-form-state';
+
+const form = document.querySelector('.feedback-form');
+
+form.addEventListener('input', throttle(onInputData, 500));
+form.addEventListener('submit', onFormSubmit);
+
+let dataForm = JSON.parse(localStorage.getItem(LOCAL_KEY)) || {};
+
+const { email, message } = form.elements;
+
+reloadPage();
+
+function onInputData(e) {
+  dataForm = { email: email.value, message: message.value };
+
+  localStorage.setItem(LOCAL_KEY, JSON.stringify(dataForm));
 }
 
-feedbackFormEl.addEventListener('input', throttle(onFeedbackFormInput, 500));
-function onFeedbackFormInput(evt) {
-  const FormElements = evt.currentTarget.elements;
-
-  let email = FormElements.email.value.trim();
-
-  let textarea = FormElements.message.value.trim();
-  const formData = {
-    email: email,
-    message: textarea,
-  };
-
-  localStorage.setItem('feedback-form-state', JSON.stringify(formData));
-
-  if (localStorage.getItem('email') && localStorage.getItem('message')) {
-    email = localStorage.getItem('email');
-    textarea = localStorage.getItem('message');
-  } else {
-    email === '' && textarea === '';
+function reloadPage() {
+  if (dataForm) {
+    email.value = dataForm.email || '';
+    message.value = dataForm.message || '';
   }
 }
-//  const storedData = JSON.parse(localStorage.getItem('feedback-form-state'));
 
-//  if (storedData && storedData.email && storedData.message) {
-//    email = storedData.email;
-//    textarea = storedData.message;
-//  }
-
-//  FormElements.email.value = email;
-//  FormElements.message.value = textarea;
+function onFormSubmit(e) {
+  e.preventDefault();
+  console.log({ email: email.value, message: message.value });
+  localStorage.removeItem(LOCAL_KEY);
+  e.currentTarget.reset();
+  dataForm = {};
+}
